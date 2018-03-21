@@ -7,3 +7,6 @@ Features:
 - Identification and monitoring of database fast-growing objects
 - Quick Access Dashboards, based on arbitrary SQL queries
 
+## Screenshots
+![DBloat_screen_menu](https://image.ibb.co/kQot9c/DBloat1.jpg)
+![DBloat_screen_report](https://image.ibb.co/cVcmUc/DBloat2.jpg)
