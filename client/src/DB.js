@@ -28,7 +28,9 @@ import RefreshIcon from 'material-ui-icons/Refresh';
 import TimeAgo from 'react-timeago';
 import CodeMirror from 'react-codemirror';
 require ('codemirror/mode/sql/sql');
+import { red500 } from 'material-ui/styles/colors.js'
 import Pager from 'react-pager';
+
 
 const api = require('./api');
 
@@ -77,17 +79,31 @@ class DB extends Component {
 
 
 
-  deleteDatabase = () =>  {
+  deleteSnapshot = (t) =>  {
     var data = {
-      name: this.state.deleteDB,
+      name: this.props.location.pathname.split('/').reverse()[0],
+      time: t
     };
-    api.callPostApi('/api/deldb', data)
+         let snaps = this.state.snaplist;
+         for( var sind in snaps ) {
+           console.log(snaps[sind][0]+';'+t);
+
+             if( snaps[sind][0] == t )
+             {
+               snaps.splice(sind,1);
+               break;
+             }
+           
+         }
+    this.setState({snaplist: snaps});
+    this.setSnapPage(snaps, this.state.snappageNum);
+
+    api.callPostApi('/api/delsnap', data)
       .then((res) => { 
-         this.handleDeleteClose();
-         this.updateDBList();
        })
       .catch((err) => { 
          console.log(err); 
+         this.updateSnapList();
          this.setState({error: String(err)}); 
          if ( err == "Error: Not Authorized")
             this.props.history.push('/auth');
@@ -173,9 +189,7 @@ class DB extends Component {
     };
     api.callPostApi('/api/listsnap', data)
       .then((res) => {
-	 console.log(res);         
          let snaps = res.snaps;
-         console.log(snaps);
          if(this.state.first != '')
          {
            let snapsf = new Array();
@@ -214,7 +228,16 @@ class DB extends Component {
 
   _buildSnapList = (el) => {
        let text = el[0];
-       return           <ListItem  key={el[0]} leftIcon={<DBIcon />} primaryText={text} onClick={() => { this.handleSnapClick(text); }}  />      
+            var actions =              
+            (
+                <IconButton
+                    tooltip='Delete'
+                    onClick={(e) => { e.stopPropagation(); this.deleteSnapshot(text); } }
+                >
+                    <DeleteIcon color={red500} /> 
+                </IconButton>
+            );  
+       return           <ListItem  key={el[0]} leftIcon={<DBIcon />} primaryText={text} onClick={() => { this.handleSnapClick(text); }} rightIconButton={actions}  />      
   }
 
 

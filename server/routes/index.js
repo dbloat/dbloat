@@ -37,6 +37,7 @@ module.exports = (app) => {
 
 
   app.post('/api/listsnap', bloatController.listsnap);
+  app.post('/api/delsnap', bloatController.delsnap);
   app.post('/api/snapreport', bloatController.snapreport);
   app.post('/api/listtbs', bloatController.listtbs);
 

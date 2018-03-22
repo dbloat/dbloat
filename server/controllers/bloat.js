@@ -638,6 +638,50 @@ performquery(req, res) {
       });
       });
   });
+ },
+
+ delsnap(req, res) {
+    let config = configman.load();
+    let configdb;
+    for(dbind in config.db) {
+      if(config.db[dbind].name == req.body.name)
+      {
+        configdb = config.db[dbind];
+        break;
+      }
+    }
+
+  oracledb.getConnection(
+  {
+    user          : configdb.user,
+    password      : configdb.pass,
+    connectString : configdb.tns
+  },
+  function(err, connection)
+  {
+    if (err) { console.error(err); return; }
+    connection.execute("alter session set time_zone='+03:00'",
+      function(err, result)
+      {
+       	if (err) { console.error(err); return; }
+        
+        let sqlvars = { time: req.body.time  }
+      connection.execute("delete from spacemon where time = to_date(:time,'dd-mm-yyyy hh24:mi:ss')",sqlvars,{ autoCommit: true },
+      function(err, result)
+      {
+        if (err) { console.error(err); return; }
+        console.log(result.rows);
+        connection.release(
+        function(err) {
+          if (err) {
+            console.error(err.message);
+          }
+        });
+
+        res.status(200).send('{ "error": false }');        
+      });
+      });
+  });
  }
 
 };
