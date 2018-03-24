@@ -3,6 +3,16 @@ var jsonfile = require('jsonfile');
 var fs = require('fs');
 
 var oracledb = require('oracledb');
+function release_con(connection)
+{
+                connection.release(
+                function(err) {
+                if (err) {
+                  console.error(err.message);
+                }
+                });
+}
+
 module.exports = {
  listdb(req,res) {
     let config = configman.load();
@@ -118,7 +128,6 @@ module.exports = {
       });
   });     
  },
-
 
 addquery(req, res) {
     let config = configman.load();
@@ -589,6 +598,112 @@ performquery(req, res) {
       });
   });
  },
+
+objinfo(req, res) {
+    let config = configman.load();
+    let configdb;
+    for(dbind in config.db) {
+      if(config.db[dbind].name == req.body.dbname)
+      {
+        configdb = config.db[dbind];
+      }
+    }
+
+  let obj = {};
+
+  oracledb.getConnection(
+  {
+    user          : configdb.user,
+    password      : configdb.pass,
+    connectString : configdb.tns
+  },
+  function(err, connection)
+  {
+    if (err) { console.error(err); return; }
+    function compare (a,b) {
+      if(a.name > b.name)
+          return -1;
+      if(a.name < b.name)
+        return  1;
+      return 0;
+    }
+
+     let sqlvars = { owner: req.body.owner, name: req.body.object_name  }
+    connection.execute("select o.object_type, sum(s.bytes) from dba_objects o JOIN dba_segments s ON o.object_name = s.segment_name where o.owner = :owner and o.object_name = :name and \
+                           ( o.object_type = 'TABLE' or o.object_type = 'INDEX' or o.object_type = 'LOB' ) GROUP BY o.object_type",sqlvars,
+      function(err, result)
+      {
+       	if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return;  }
+        if( result.rows.length > 1 ) {  res.status(500).send('{ "error": "More than one object returned" }'); return; }
+        obj.obj_type = result.rows[0][0];
+        obj.obj_size = result.rows[0][1];
+        if( obj.obj_type == 'INDEX' )
+        {
+          connection.execute("SELECT i.owner, i.table_name, sum(s.bytes) FROM dba_indexes i LEFT JOIN dba_segments s ON i.table_name = s.segment_name WHERE i.owner = :owner and i.index_name = :name GROUP BY i.owner, i.table_name", sqlvars,
+          function(err, resultind)
+          {
+             if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return;  }
+             console.log(resultind);
+             obj.table_owner = resultind.rows[0][0];
+             obj.table = resultind.rows[0][1];
+             obj.table_size =  resultind.rows[0][2];
+             connection.execute("select p.partition_name, sum(s.bytes) from dba_ind_partitions p JOIN dba_segments s ON p.partition_name = s.partition_name AND :name = s.segment_name  where p.index_owner = :owner and p.index_name = :name GROUP BY p.partition_name",sqlvars,
+             function(err, resultpart) {
+             if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return;  }
+               obj.partitions = [];
+               for(pind in resultpart.rows)
+                 obj.partitions.push( { name: resultpart.rows[pind][0], size: resultpart.rows[pind][1] });
+               obj.partitions.sort(compare);
+               release_con(connection);
+               res.status(200).send('{ "info": '+JSON.stringify(obj)+' }');
+             });
+          });
+        } else
+        if( obj.obj_type == 'TABLE' )
+        {
+          connection.execute("select p.partition_name, sum(s.bytes) from dba_tab_partitions p JOIN dba_segments s ON p.partition_name = s.partition_name AND :name = s.segment_name where p.table_owner = :owner and p.table_name = :name GROUP BY p.partition_name",sqlvars,
+             function(err, resultpart) {
+             if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return;  }
+               obj.partitions = [];
+               for(pind in resultpart.rows)
+                 obj.partitions.push( { name: resultpart.rows[pind][0], size: resultpart.rows[pind][1] });
+               obj.partitions.sort(compare);
+               release_con(connection);
+               res.status(200).send('{ "info": '+JSON.stringify(obj)+' }');
+             });
+        } else
+        if( obj.obj_type == 'LOB' )
+        {
+          let sqlvars = { name: req.body.object_name  }
+          connection.execute("SELECT l.owner, l.table_name FROM dba_lobs l JOIN dba_segments s ON l.table_name = s.segment_name WHERE l.segment_name = :name GROUP BY l.owner, l.table_name", sqlvars,
+          function(err, resultlob)
+          {
+             if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return;  }
+             console.log(resultlob);
+             obj.table_owner = resultlob.rows[0][0];
+             obj.table = resultlob.rows[0][1];
+             obj.table_size = resultlob.rows[0][2];
+             connection.execute("select p.lob_partition_name, p.partition_name, sum(bytes) from dba_lob_partitions p JOIN dba_segments s ON p.lob_partition_name = s.partition_name AND :name = s.segment_name WHERE  p.lob_name = :name GROUP BY p.partition_name, p.lob_partition_name",sqlvars,
+             function(err, resultpart) {
+             if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return;  }
+               obj.partitions = [];
+               for(pind in resultpart.rows)
+                 obj.partitions.push( { name: resultpart.rows[pind][1], lobname: resultpart.rows[pind][0], size: resultpart.rows[pind][2] });
+               obj.partitions.sort(compare);
+               release_con(connection);
+               res.status(200).send('{ "info": '+JSON.stringify(obj)+' }');
+             });
+          });
+        } else
+        {
+          release_con(connection);
+          res.status(200).send('{ "info": '+JSON.stringify(obj)+' }');        
+        }
+      });
+  });
+
+}, 
+
 
  snapreport(req, res) {
     let config = configman.load();
