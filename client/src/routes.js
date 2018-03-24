@@ -6,6 +6,7 @@ import DB from './DB';
 import Report from './Report';
 import Auth from './Auth';
 import Dashboard from './Dashboard';
+import DBObject from './DBObject';
 
 const Routes = (props) => (
   <Router>
@@ -17,6 +18,7 @@ const Routes = (props) => (
     <Route path="/report/*" component={Report} />    
     <Route path="/auth" component={Auth} />    
     <Route path="/dashboard" component={Dashboard} />    
+    <Route path="/dbobject" component={DBObject} />    
   </Switch>
   </div>
   </Router>

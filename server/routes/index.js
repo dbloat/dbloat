@@ -9,7 +9,7 @@ module.exports = (app) => {
   app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] :response-time ms'));
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
-  
+
   app.get('/api/hello', (req, res) => res.status(200).send('{ "response": "Hello" }'));
 
 
@@ -41,6 +41,7 @@ module.exports = (app) => {
   app.post('/api/snapreport', bloatController.snapreport);
   app.post('/api/listtbs', bloatController.listtbs);
 
+  app.post('/api/objinfo', bloatController.objinfo);
 
   app.use(express.static(path.resolve(__dirname, '../..', 'dist')));
   

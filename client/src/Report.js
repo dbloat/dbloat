@@ -128,6 +128,11 @@ class App extends Component {
      }
   }
 
+  handleRowSelection = (index) => {
+    let el = this.state.rowlist[index[0]]
+    this.props.history.push('/dbobject/'+this.state.dbname+'/'+el[1]+'/'+el[2]+'/'+el[3]);
+  }
+
   _buildDropDownMenu = (el) => {
      return <MenuItem value={el[0]} primaryText={el[0]} />
   }
@@ -135,7 +140,7 @@ class App extends Component {
   _buildSnapTable = (el) => {
        let impact = el[4] * 100/this.state.totaldiff;
        let change = this.pRound(el[4] * 100/el[5]);
-       return           <TableRow><TableRowColumn >{el[0]}</TableRowColumn><TableRowColumn style={{ width: 150 }}>{el[1]}</TableRowColumn><TableRowColumn >{el[2]}</TableRowColumn><TableRowColumn >{el[3]}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{this.wordSize(el[5])}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{this.wordSize(el[4])}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{change} %</TableRowColumn><TableRowColumn style={{ width: 80 }}> <LinearProgress mode="determinate" value={impact} /></TableRowColumn></TableRow>    
+       return           <TableRow ><TableRowColumn >{el[0]}</TableRowColumn><TableRowColumn style={{ width: 150 }}>{el[1]}</TableRowColumn><TableRowColumn >{el[2]}</TableRowColumn><TableRowColumn >{el[3]}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{this.wordSize(el[5])}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{this.wordSize(el[4])}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{change} %</TableRowColumn><TableRowColumn style={{ width: 80 }}> <LinearProgress mode="determinate" value={impact} /></TableRowColumn></TableRow>    
   }
 
   render() {
@@ -160,8 +165,8 @@ class App extends Component {
         </DropDownMenu>
         <p>Total Delta: {this.wordSize(this.state.totaldiff)}</p>        
         </Paper>
-        <Table>
-         <TableHeader>
+        <Table onRowSelection={this.handleRowSelection} >
+         <TableHeader  displaySelectAll={false}  adjustForCheckbox={false} >
           <TableRow>
            <TableHeaderColumn>Tablespace</TableHeaderColumn>
            <TableHeaderColumn style={{ width: 150 }}>Owner</TableHeaderColumn>
@@ -173,7 +178,7 @@ class App extends Component {
            <TableHeaderColumn style={{ width: 80 }}>Impact %</TableHeaderColumn>
          </TableRow>
         </TableHeader>
-         <TableBody>
+         <TableBody displayRowCheckbox={false} >
          {this.state.rowlist.map(this._buildSnapTable)}
          </TableBody>
         </Table>

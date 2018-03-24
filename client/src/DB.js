@@ -450,12 +450,12 @@ class DB extends Component {
           autoDetectWindowHeight={true}
         >
         <p> {this.state.error} </p> 
-        <TextField onChange={(e, value) => { this.setState({ newQueryName: value } ); }} hintText="Enter Query name" value={this.state.newQueryName} />
-        <TextField onChange={(e, value) => { this.setState({ newQueryUpdate: value } ); }} hintText="Update Frequency (minutes)" value={this.state.newQueryUpdate} />
+        <TextField onChange={(e, value) => { this.setState({ newQueryName: value } ); }} hintText="Enter Query name" value={this.state.newQueryName} floatingLabelText="Name" />
+        <TextField onChange={(e, value) => { this.setState({ newQueryUpdate: value } ); }} hintText="Update interval (minutes)" value={this.state.newQueryUpdate} floatingLabelText="Update Interval (minutes)" />
         <CodeMirror value={this.state.newQuerySQL} 
              onChange={(value) => { this.setState({ newQuerySQL: value } );  }}
              options = {{ lineNumbers : true, mode : 'text/x-sql' }} /> 
-        <TextField onChange={(e, value) => { this.setState({ newQueryPriority: value } ); }} hintText="Priority" value={this.state.newQueryPriority} />        
+        <TextField onChange={(e, value) => { this.setState({ newQueryPriority: value } ); }} hintText="Priority" value={this.state.newQueryPriority} floatingLabelText="Priority" />        
         </Dialog>
         </Tab>
         </Tabs>

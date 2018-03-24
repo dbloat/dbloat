@@ -85,7 +85,9 @@ class App extends Component {
   updateFullQueries = () => {
     api.callApi('/api/listfullqueries')
       .then((res) => {
-         this.setState({fullquerylist: res.queries});
+         let query0 = '';
+         if(res.queries.length > 0) query0 = res.queries[0];
+         this.setState({fullquerylist: res.queries, currentQuery: query0});
      })
       .catch((err) => {
            console.log(err);

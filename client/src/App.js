@@ -121,8 +121,7 @@ class App extends Component {
                     <DeleteIcon color={red500} /> 
                 </IconButton>
                 </div>
-            );            
-           
+            );
        return           <ListItem  key={el.name} leftIcon={<DBIcon />} primaryText={el.name} rightIconButton={actions} onClick={() => { this.handleDBClick(el.name); }}  />      
   }
 
