@@ -13,3 +13,35 @@ Features:
 ## Screenshots
 ![DBloat_screen_menu](https://image.ibb.co/kQot9c/DBloat1.jpg)
 ![DBloat_screen_report](https://image.ibb.co/cVcmUc/DBloat2.jpg)
+
+
+## Installation
+1. Install Oracle Instant Client
+
+http://www.oracle.com/technetwork/database/database-technologies/instant-client/overview/index.html
+
+Download Oracle Instant Client and unpack it somewhere on server.
+
+Set Environment variable LD_LIBRARY_PATH
+```
+export LD_LIBRARY_PATH=/home/dbloat/instantclient_12_2/
+```
+
+2. Install DBloat
+
+Clone this repository somewhere on your server
+```
+git clone https://github.com/stffart/dbloat.git
+```
+Install required modules and run application
+```
+cd dbloat
+npm install
+npm run run
+```
+DBloat web interface is accessible at URL
+```
+http://<your server>:8060/
+```
+
+
