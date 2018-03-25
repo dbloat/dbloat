@@ -539,7 +539,7 @@ performquery(req, res) {
       {
        	if (err) { console.error(err); return; }
       
-      connection.execute("select distinct(to_char(time,'dd-mm-yyyy hh24:mi:ss')) snap from spacemon order by snap",
+      connection.execute("select to_char(time,'dd-mm-yyyy hh24:mi:ss') snap, sum(objsize) sz, (cast(time as date) - date '1970-01-01')*24*60*60  from spacemon group by time order by time",
       function(err, result)
       {
         if (err) { console.error(err); return; }

@@ -1,3 +1,4 @@
+
 import React, { Component } from 'react';
 import Paper from 'material-ui/Paper';
 import {Card, CardActions, CardHeader, CardText} from 'material-ui/Card';
@@ -30,7 +31,16 @@ import CodeMirror from 'react-codemirror';
 require ('codemirror/mode/sql/sql');
 import { red500 } from 'material-ui/styles/colors.js'
 import Pager from 'react-pager';
-
+import {
+  FlexibleWidthXYPlot,
+  XAxis,
+  YAxis,
+  VerticalGridLines,
+  HorizontalGridLines,
+  LineSeries,
+  MarkSeries,
+  Hint
+} from 'react-vis';
 
 const api = require('./api');
 
@@ -56,7 +66,8 @@ class DB extends Component {
       newQueryName : '',
       newQuerySQL : '',
       editQuery: false,
-      oldName: ''
+      oldName: '',
+      x: 0, y: 0, ymax: 1, plotData : [ ]
     };
   }
 
@@ -182,6 +193,16 @@ class DB extends Component {
     this.setState({ snappage: snapPage, snappageTotal: snaplist.length/pageSize  });
   }
   
+  dateFormat = (v) => {
+    let d = new Date(v);
+    var day = d.getDate();
+    var month = d.getMonth()+1;
+    var year = d.getFullYear();
+    var hour = d.getHours();
+    var min = d.getMinutes();
+    if(min.toString().length == 1) min = "0"+min;
+    return day  + "-" + month + "-" +year + " " + hour + ":" +min;
+  }
 
   updateSnapList = () => {
     var data = {
@@ -190,6 +211,16 @@ class DB extends Component {
     api.callPostApi('/api/listsnap', data)
       .then((res) => {
          let snaps = res.snaps;
+         let data = [];
+         let szmax = 0;
+         for(var snapind in snaps)
+         {
+           let datay = this.pRound(snaps[snapind][1]/1024/1024/1024);
+           let datael = { x: Math.round(snaps[snapind][2]*1000), y : datay };
+           if(szmax < datael.y) szmax = datael.y;
+           data.push(datael);
+         }
+         this.setState( { plotData : data , ymax: szmax} );
          if(this.state.first != '')
          {
            let snapsf = new Array();
@@ -197,7 +228,7 @@ class DB extends Component {
            for(var snapind in snaps)
            {
              if(fnd) snapsf.push(snaps[snapind]);
-             if(snaps[snapind] == this.state.first) fnd = true;
+             if(snaps[snapind][0] == this.state.first) fnd = true;
            } 
            this.setState({snaplist: snapsf});           
            this.setSnapPage(snapsf, this.state.snappageNum);
@@ -225,6 +256,41 @@ class DB extends Component {
     if (this.state.second == '') this.setState({second : n}); 
     this.updateSnapList();     
   }
+
+
+  pRound = (n) => {
+     return Math.round(n*100)/100;
+  }
+
+  wordSize = (size) => {
+     let oldSize = size;
+     size /= 1024;
+     if(size > 1)
+     {
+       let oldSize = size;
+       size /= 1024;
+       if(size > 1)
+       {
+         let oldSize = size;
+         size /= 1024;
+         if(size > 1)
+         {
+            return this.pRound(size)+"  Gbytes";
+         } else
+         {
+         return oldSize+"  Mbytes";
+         }
+       } else
+       {
+         return oldSize+"  bytes";
+       }
+
+     } else
+     {
+       return oldSize+" bytes";
+     }
+  }
+
 
   _buildSnapList = (el) => {
        let text = el[0];
@@ -350,7 +416,9 @@ class DB extends Component {
   };
 
 
-
+  _rememberPlotValue = (value) => {
+     this.setState({ plotValue: value });
+  } 
 
 
   render() {
@@ -391,7 +459,7 @@ class DB extends Component {
       />,
     ];
 
-
+    const CHART_MARGINS = {left: 50, right: 10, top: 10, bottom: 120};
 
     return (
       <MuiThemeProvider>
@@ -457,9 +525,45 @@ class DB extends Component {
              options = {{ lineNumbers : true, mode : 'text/x-sql' }} /> 
         <TextField onChange={(e, value) => { this.setState({ newQueryPriority: value } ); }} hintText="Priority" value={this.state.newQueryPriority} floatingLabelText="Priority" />        
         </Dialog>
-        </Tab>
-        </Tabs>
-      </div>
+      
+      </Tab>
+      <Tab label="Space Plots" style={{ backgroundColor: "#81C784" }} >
+       <Paper label="Database size" style={style} >
+        <h2>DB Size - {this.state.dbname}</h2>
+
+       <FlexibleWidthXYPlot
+        height={300}
+        margin={CHART_MARGINS}>
+        <VerticalGridLines />
+        <HorizontalGridLines />
+        <XAxis tickFormat={ v => (this.dateFormat(v)).toString() } tickLabelAngle={-45} height={100} />
+        <YAxis title="Size (GBytes)" />
+        <LineSeries  data={this.state.plotData}/>
+        <MarkSeries
+          onNearestX={this._rememberPlotValue}
+          data={this.state.plotData}  size={3} />
+        {this.state.plotValue ?
+          <LineSeries
+            data={[{x: this.state.plotValue.x, y: this.state.plotValue.y}, {x: this.state.plotValue.x, y: this.state.ymax}]}
+            stroke="black"
+          /> : null
+        }
+        {this.state.plotValue ?
+          <Hint
+            value={this.state.plotValue}
+            align={ {horizontal: Hint.AUTO, vertical: Hint.ALIGN.TOP_EDGE} }
+          >
+            <div className="rv-hint__content">
+              { `${(this.dateFormat(this.state.plotValue.x)).toString()}: ${this.state.plotValue.y} GBytes` }
+            </div>
+          </Hint> : null
+        }
+      </FlexibleWidthXYPlot>
+      </Paper>
+      </Tab>
+      </Tabs>
+       </div>
+
       </MuiThemeProvider>
     );
   }
