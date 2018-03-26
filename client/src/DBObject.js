@@ -31,7 +31,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.setState({ owner : this.props.location.pathname.split('/')[3], dbobject : this.props.location.pathname.split('/')[4] });
+    this.setState({ dbname:  this.props.location.pathname.split('/')[2], owner : this.props.location.pathname.split('/')[3], dbobject : this.props.location.pathname.split('/')[4] });
     if(this.props.location.pathname.split('/').length > 5)
      this.setState({  dbpart: this.props.location.pathname.split('/')[5] });
     this.updateObjectInfo();
@@ -128,10 +128,10 @@ class App extends Component {
         <p>Object Type: {this.state.info.obj_type}</p>
         <p>Object Size: {this.wordSize(this.state.info.obj_size)}</p>
         { this.state.info.obj_type == 'INDEX' &&
-          <p>Index Table: {this.state.info.table_owner}.{this.state.info.table} (Size: {this.wordSize(this.state.info.table_size)})</p>
+          <p>Index Table: <a href={"/dbobject/"+this.state.dbname+"/"+this.state.info.table_owner+"/"+this.state.info.table} >{this.state.info.table_owner}.{this.state.info.table}</a> (Size: {this.wordSize(this.state.info.table_size)})</p>
         }
         { this.state.info.obj_type == 'LOB' &&
-          <p>LOB Table: {this.state.info.table_owner}.{this.state.info.table}</p>
+          <p>LOB Table:  <a href={"/dbobject/"+this.state.dbname+"/"+this.state.info.table_owner+"/"+this.state.info.table} >{this.state.info.table_owner}.{this.state.info.table}</a> (Size: {this.wordSize(this.state.info.table_size)})</p>
         }
         </div>
         { this.state.info.partitions.length > 0 &&

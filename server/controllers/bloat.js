@@ -717,7 +717,7 @@ objinfo(req, res) {
         if( obj.obj_type == 'LOB' )
         {
           let sqlvars = { name: req.body.object_name  }
-          connection.execute("SELECT l.owner, l.table_name FROM dba_lobs l JOIN dba_segments s ON l.table_name = s.segment_name WHERE l.segment_name = :name GROUP BY l.owner, l.table_name", sqlvars,
+          connection.execute("SELECT l.owner, l.table_name, sum(bytes) FROM dba_lobs l JOIN dba_segments s ON l.table_name = s.segment_name WHERE l.segment_name = :name GROUP BY l.owner, l.table_name", sqlvars,
           function(err, resultlob)
           {
              if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return;  }
