@@ -57,7 +57,13 @@ class App extends Component {
          console.log(res);
          this.setState({info: res.info });
        })
-      .catch((err) => { console.log(err); this.setState({error: String(err)}); });
+      .catch((err) => { 
+         console.log(err);
+         if ( err == "Error: Not Authorized")
+            this.props.history.push('/auth');
+         this.updateSnapList(this.state.tbs);
+         this.setState({error: String(err)});
+        });
 
   }
 

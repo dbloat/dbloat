@@ -38,11 +38,11 @@ Install required modules and run application
 ```
 cd dbloat
 npm install
-npm run run
+npm run prod
 ```
 DBloat web interface is accessible at URL
 ```
 http://<your server>:8060/
 ```
-
+Default account is admin with password admin
 

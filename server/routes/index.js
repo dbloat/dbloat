@@ -1,4 +1,5 @@
 const bloatController = require('../controllers/bloat');
+const authController = require('../auth/auth');
 const morgan = require('morgan');
 const express = require('express');
 const path = require('path');
@@ -10,9 +11,10 @@ module.exports = (app) => {
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.json());
 
-  app.get('/api/hello', (req, res) => res.status(200).send('{ "response": "Hello" }'));
+  app.post('/auth', authController.checkUser);
 
-
+  app.all('/api/*', authController.checkToken);
+  
   app.get('/api/listdb', bloatController.listdb);
 
   app.post('/api/adddb', bloatController.adddb);

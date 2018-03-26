@@ -32,11 +32,15 @@ class Auth extends Component {
 
   checkAuth = () => {
     console.log(this.state.user+";"+this.state.pass);
-    let auth = api.createAuth(this.state.user, this.state.pass);
-    api.callApiFirst('/api/listdb', auth)
+    var data = {
+      user: this.state.user,
+      pass: this.state.pass
+    };
+
+    api.callPostApi('/auth', data)
       .then((res) => {
-	 console.log(res);         
-         localStorage.setItem('auth',auth);
+	 console.log(res);
+         localStorage.setItem('auth',res.token);
          this.props.history.push('/'); 
        })
       .catch((err) => { console.log(err); this.setState({error: String(err)}); });
