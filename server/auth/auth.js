@@ -36,24 +36,24 @@ module.exports = {
    let auth = jsonfile.readFileSync(file);
    let header = req.get("Authorization");
    if(header == undefined) {
-     res.status(401).send('{ "error": "Not Authorized1" }');
+     res.status(401).send('{ "error": "Not Authorized" }');
      return;
    }
    let headeropts = header.split(' ');
    if(headeropts.length != 2)
    {
-       res.status(401).send('{ "error": "Not Authorized2" }');
+       res.status(401).send('{ "error": "Not Authorized" }');
        return;
    }
    if(headeropts[0] != 'Bearer')
    {
-       res.status(401).send('{ "error": "Not Authorized3" }');
+       res.status(401).send('{ "error": "Not Authorized" }');
        return;
    }
    let token = headeropts[1];
    console.log(token);
    jwt.verify(token, auth.secret, function(err, decoded) {
-     if(err) { res.status(401).send('{ "error": "Not Authorized4" }'); return; }
+     if(err) { res.status(401).send('{ "error": "Not Authorized" }'); return; }
      next();
    });
  }
