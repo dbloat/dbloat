@@ -41,6 +41,8 @@ module.exports = (app) => {
   app.post('/api/snapreport', bloatController.snapreport);
   app.post('/api/listtbs', bloatController.listtbs);
 
+  app.post('/api/tbsplot', bloatController.tbsplot);
+
   app.post('/api/objinfo', bloatController.objinfo);
 
   app.use(express.static(path.resolve(__dirname, '../..', 'dist')));

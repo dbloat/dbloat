@@ -31,6 +31,8 @@ import CodeMirror from 'react-codemirror';
 require ('codemirror/mode/sql/sql');
 import { red500 } from 'material-ui/styles/colors.js'
 import Pager from 'react-pager';
+import DropDownMenu from 'material-ui/DropDownMenu';
+import MenuItem from 'material-ui/MenuItem';
 import {
   FlexibleWidthXYPlot,
   XAxis,
@@ -67,13 +69,16 @@ class DB extends Component {
       newQuerySQL : '',
       editQuery: false,
       oldName: '',
-      x: 0, y: 0, ymax: 1, plotData : [ ]
+      tbslist: ['ALL'],
+      tbs: 'ALL',
+      ymax: 1, plotData : [ ]
     };
   }
 
   componentDidMount() {
     this.setState({ dbname: this.props.location.pathname.split('/').reverse()[0] });
-    this.updateSnapList();    
+    this.updateSnapList(this.state.tbs);    
+    this.updateTBSList();
     this.updateQueries();
   }
 
@@ -85,7 +90,7 @@ class DB extends Component {
 
   handleCancel = () =>  {
     this.setState({first : '', second: ''});     
-    this.updateSnapList();
+    this.updateSnapList(this.state.tbs);
   };
 
 
@@ -114,13 +119,29 @@ class DB extends Component {
        })
       .catch((err) => { 
          console.log(err); 
-         this.updateSnapList();
+         this.updateSnapList(this.state.tbs);
          this.setState({error: String(err)}); 
          if ( err == "Error: Not Authorized")
             this.props.history.push('/auth');
 
       });
   };
+
+  updateTBSList = () => {
+    var data = {
+      name: this.props.location.pathname.split('/').reverse()[0]
+    };
+
+    api.callPostApi('/api/listtbs', data)
+      .then((res) => {
+         res.tbs.push(['ALL']);
+         console.log(res);
+         this.setState({tbslist: res.tbs });
+       })
+      .catch((err) => { console.log(err); this.setState({error: String(err)}); });
+
+  }
+
 
   updateQueries = () => { 
     var data = {
@@ -204,23 +225,60 @@ class DB extends Component {
     return day  + "-" + month + "-" +year + " " + hour + ":" +min;
   }
 
-  updateSnapList = () => {
+  updateTBSPlot = (tbsname) => {
+    if(tbsname != 'ALL')
+    {
+    var data = {
+      name: this.props.location.pathname.split('/').reverse()[0],
+      tbs: tbsname
+    };
+      api.callPostApi('/api/tbsplot', data)
+      .then((res) => {
+         let snaps = res.snaps;
+           let data = [];
+           let szmax = 0;
+           for(var snapind in snaps)
+           {
+             let datay = this.pRound(snaps[snapind][1]/1024/1024/1024);
+             let datael = { x: Math.round(snaps[snapind][2]*1000), y : datay };
+             if(szmax < datael.y) szmax = datael.y;
+             data.push(datael);
+           }
+           this.setState( { plotData : data , ymax: szmax} );
+           let newValue = { x: data[0].x, y : data[0].y };
+           this.setState( { plotValue : newValue } );
+      })
+      .catch((err) => { 
+           console.log(err); 
+           this.setState({error: String(err)}); 
+           if ( err == "Error: Not Authorized")
+             this.props.history.push('/auth');
+       });
+    }
+  }
+
+  updateSnapList = (tbsname) => {
     var data = {
       name: this.props.location.pathname.split('/').reverse()[0],
     };
     api.callPostApi('/api/listsnap', data)
       .then((res) => {
          let snaps = res.snaps;
-         let data = [];
-         let szmax = 0;
-         for(var snapind in snaps)
+         if(tbsname == 'ALL')
          {
-           let datay = this.pRound(snaps[snapind][1]/1024/1024/1024);
-           let datael = { x: Math.round(snaps[snapind][2]*1000), y : datay };
-           if(szmax < datael.y) szmax = datael.y;
-           data.push(datael);
+           let data = [];
+           let szmax = 0;
+           for(var snapind in snaps)
+           {
+             let datay = this.pRound(snaps[snapind][1]/1024/1024/1024);
+             let datael = { x: Math.round(snaps[snapind][2]*1000), y : datay };
+             if(szmax < datael.y) szmax = datael.y;
+             data.push(datael);
+           }
+           this.setState( { plotData : data , ymax: szmax} );
+           let newValue = { x: data[0].x, y : data[0].y };
+           this.setState( { plotValue : newValue } );
          }
-         this.setState( { plotData : data , ymax: szmax} );
          if(this.state.first != '')
          {
            let snapsf = new Array();
@@ -254,7 +312,7 @@ class DB extends Component {
     console.log(n);
     if (this.state.first == '') this.setState({first : n}); else
     if (this.state.second == '') this.setState({second : n}); 
-    this.updateSnapList();     
+    this.updateSnapList(this.state.tbs);     
   }
 
 
@@ -420,6 +478,17 @@ class DB extends Component {
      this.setState({ plotValue: value });
   } 
 
+  _buildDropDownMenu = (el) => {
+     return <MenuItem value={el[0]} primaryText={el[0]} />
+  }
+
+  handleTbsChange = (event, index, value) => {
+      this.setState({tbs : value});
+      if(value == 'ALL') 
+        this.updateSnapList(value); else
+        this.updateTBSPlot(value);
+  }
+
 
   render() {
     let SelectableList = makeSelectable(List);
@@ -530,7 +599,9 @@ class DB extends Component {
       <Tab label="Space Plots" style={{ backgroundColor: "#81C784" }} >
        <Paper label="Database size" style={style} >
         <h2>DB Size - {this.state.dbname}</h2>
-
+       <DropDownMenu value={this.state.tbs} onChange={this.handleTbsChange} >
+            {this.state.tbslist.map(this._buildDropDownMenu)}
+        </DropDownMenu>
        <FlexibleWidthXYPlot
         height={300}
         margin={CHART_MARGINS}>

@@ -514,6 +514,48 @@ performquery(req, res) {
   }
 }, 
 
+ tbsplot(req, res) {
+    let config = configman.load();
+    let configdb;
+    for(dbind in config.db) {
+      if(config.db[dbind].name == req.body.name)
+      {
+        configdb = config.db[dbind];
+        break;
+      }
+    }
+
+  oracledb.getConnection(
+  {
+    user          : configdb.user,
+    password      : configdb.pass,
+    connectString : configdb.tns
+  },
+  function(err, connection)
+  {
+    if (err) { console.error(err); return; }
+    connection.execute("alter session set time_zone='+03:00'",
+      function(err, result)
+      {
+       	if (err) { console.error(err); return; }
+      let sqlvars = { tbs: req.body.tbs };
+      connection.execute("select to_char(time,'dd-mm-yyyy hh24:mi:ss') snap, sum(objsize) sz, (cast(time as date) - date '1970-01-01')*24*60*60  from spacemon WHERE tablespace_name = :tbs group by time order by time",sqlvars,
+      function(err, result)
+      {
+        if (err) { console.error(err); return; }
+        console.log(result.rows);
+        connection.release(
+        function(err) {
+          if (err) {
+            console.error(err.message);
+          }
+        });
+        res.status(200).send('{ "snaps": '+JSON.stringify(result.rows)+' }');        
+      });
+      });
+  });
+ },
+
  listsnap(req, res) {
     let config = configman.load();
     let configdb;
