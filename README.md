@@ -13,7 +13,7 @@ Features:
 ## Screenshots
 ![DBloat_screen_menu](https://image.ibb.co/kQot9c/DBloat1.jpg)
 ![DBloat_screen_report](https://image.ibb.co/cVcmUc/DBloat2.jpg)
-
+![DBloat_screen_plot](https://image.ibb.co/kC8qx7/DBloat3.jpg)
 
 ## Installation
 
