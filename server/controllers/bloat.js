@@ -783,16 +783,27 @@ objinfo(req, res) {
       function(err, result)
       {
         if (err) { console.error(err); return; }
-        console.log(result.rows);
-        connection.release(
-        function(err) {
-          if (err) {
-            console.error(err.message);
-          }
+           console.log(result.rows);
+           var rows = result.rows;
+           //new objects
+           connection.execute("select s1.tablespace_name, s1.owner, s1.segment_name, s1.partition_name, s1.objsize, 0, s1.objsize from spacemon s1 where s1.time = to_date (:second, 'dd-mm-yyyy hh24:mi:ss') and (select count(*) from spacemon s2 where s2.owner=s1.owner and s2.segment_name=s1.segment_name and s2.partition_name=s1.partition_name and s2.time = to_date (:first, 'dd-mm-yyyy hh24:mi:ss')) = 0 order by s1.objsize desc",sqlvars,
+           function(err, result)
+           {
+             if (err) { console.error(err); return; }
+             var rowsall = rows.concat(result.rows);
+             function compare (a,b) {
+               if(parseInt(a[4]) > parseInt(b[4]))
+                  return -1;
+               if(parseInt(a[4]) < parseInt(b[4]))
+                  return  1;
+               return 0;
+             }
+             rowsall.sort(compare);
+             var rowsres = rowsall.slice(0,30);
+             release_con(connection);
+            res.status(200).send('{ "rows": '+JSON.stringify(rowsres)+' }');        
+           });
         });
-
-        res.status(200).send('{ "rows": '+JSON.stringify(result.rows)+' }');        
-      });
       });
   });
  },

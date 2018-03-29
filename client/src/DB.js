@@ -288,8 +288,8 @@ class DB extends Component {
              if(fnd) snapsf.push(snaps[snapind]);
              if(snaps[snapind][0] == this.state.first) fnd = true;
            } 
-           this.setState({snaplist: snapsf});           
-           this.setSnapPage(snapsf, this.state.snappageNum);
+           this.setState({snaplist: snapsf, snappageNum: 0});           
+           this.setSnapPage(snapsf, 0);
          } else
          {
             this.setState({snaplist: res.snaps});

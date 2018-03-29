@@ -140,7 +140,15 @@ class App extends Component {
   _buildSnapTable = (el) => {
        let impact = el[4] * 100/this.state.totaldiff;
        let change = this.pRound(el[4] * 100/el[5]);
-       return           <TableRow ><TableRowColumn >{el[0]}</TableRowColumn><TableRowColumn style={{ width: 150 }}>{el[1]}</TableRowColumn><TableRowColumn >{el[2]}</TableRowColumn><TableRowColumn >{el[3]}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{this.wordSize(el[5])}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{this.wordSize(el[4])}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{change} %</TableRowColumn><TableRowColumn style={{ width: 80 }}> <LinearProgress mode="determinate" value={impact} /></TableRowColumn></TableRow>    
+       if(el[5] == 0) change = "New"; else 
+       {
+         if(change < 200) change = change + " %"; else
+         {
+            change = this.pRound(change/100) + " times";
+         }
+         
+       }
+       return           <TableRow ><TableRowColumn >{el[0]}</TableRowColumn><TableRowColumn style={{ width: 150 }}>{el[1]}</TableRowColumn><TableRowColumn >{el[2]}</TableRowColumn><TableRowColumn >{el[3]}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{this.wordSize(el[5])}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{this.wordSize(el[4])}</TableRowColumn><TableRowColumn style={{ width: 80 }}>{change}</TableRowColumn><TableRowColumn style={{ width: 80 }}> <LinearProgress mode="determinate" value={impact} /></TableRowColumn></TableRow>    
   }
 
   render() {
