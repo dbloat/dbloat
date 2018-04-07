@@ -32,7 +32,7 @@ export LD_LIBRARY_PATH=/home/dbloat/instantclient_12_2/
 
 Clone this repository somewhere on your server
 ```
-git clone https://github.com/stffart/dbloat.git
+git clone https://github.com/dbloat/dbloat.git
 ```
 Install required modules and run application
 ```
