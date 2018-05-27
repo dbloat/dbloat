@@ -375,7 +375,8 @@ class DB extends Component {
       sql: this.state.newQuerySQL,
       edit: this.state.editQuery,
       priority: this.state.newQueryPriority,
-      update: this.state.newQueryUpdate
+      update: this.state.newQueryUpdate,
+      hour: this.state.newQueryHour
     };  else
     data = {
       dbname: this.props.location.pathname.split('/').reverse()[0],
@@ -433,7 +434,7 @@ class DB extends Component {
 
 
        return      (    
-            <Card key={el.name} style={{ width : "90%", margin: "20px" }} onClick={ () => { this.handleLoad(el.name,el.sql,el.priority,el.update); }} >
+            <Card key={el.name} style={{ width : "100%", margin: "20px" }} onClick={ () => { this.handleLoad(el.name,el.sql,el.priority,el.update,el.hour); }} >
            <CardHeader title={el.name} style={{ backgroundColor: "#80CBC4"}}  >
               <TimeAgo style={{ fontSize: "9pt", float: "right", position: "relative", bottom: "15px" }}date={el.lastrefresh} formatter={this.agoFormatter} />
            </CardHeader>
@@ -458,11 +459,12 @@ class DB extends Component {
   }
 
   handleOpen = () =>  {
-    this.setState({addQueryDialog: true, newQueryName: '', newQuerySQL: '', newQueryPriority: '', newQueryUpdate: 0, editQuery: false });
+    this.setState({addQueryDialog: true, newQueryName: '', newQuerySQL: '', newQueryPriority: '', newQueryUpdate: 0, newQueryHour: 0, editQuery: false });
   };
 
-  handleLoad = (name, sql, priority, update) =>  {
-    this.setState({addQueryDialog: true, newQueryName: name, newQuerySQL: sql, newQueryPriority: priority, newQueryUpdate: update, editQuery: true, oldName: name });
+  handleLoad = (name, sql, priority, update, hour) =>  {
+    if(!hour)  hour = 0;
+    this.setState({addQueryDialog: true, newQueryName: name, newQuerySQL: sql, newQueryPriority: priority, newQueryUpdate: update, newQueryHour: hour, editQuery: true, oldName: name });
   };
 
   handleClose = () =>  {
@@ -533,7 +535,7 @@ class DB extends Component {
     return (
       <MuiThemeProvider>
       <div className="App">
-        <Tabs style={{ width : "90%" }}  >
+        <Tabs style={{ width : "95%" }}  >
         <Tab label="Space Tracking" style={{ backgroundColor: "#7986CB" }} >
         <Paper label="Snapshots" style={style} >
         <h2>Snapshots - {this.state.dbname}</h2>
@@ -589,6 +591,7 @@ class DB extends Component {
         <p> {this.state.error} </p> 
         <TextField onChange={(e, value) => { this.setState({ newQueryName: value } ); }} hintText="Enter Query name" value={this.state.newQueryName} floatingLabelText="Name" />
         <TextField onChange={(e, value) => { this.setState({ newQueryUpdate: value } ); }} hintText="Update interval (minutes)" value={this.state.newQueryUpdate} floatingLabelText="Update Interval (minutes)" />
+        <TextField onChange={(e, value) => { this.setState({ newQueryHour: value } ); }} hintText="Starting from (hour of day)" value={this.state.newQueryHour} floatingLabelText="Starting from (hour)" />
         <CodeMirror value={this.state.newQuerySQL} 
              onChange={(value) => { this.setState({ newQuerySQL: value } );  }}
              options = {{ lineNumbers : true, mode : 'text/x-sql' }} /> 

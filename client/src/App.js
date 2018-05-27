@@ -37,11 +37,11 @@ class App extends Component {
   }
 
   handleOpen = () =>  {
-    this.setState({addDBDialog: true, addDBTitle: 'Add Database', newDBName: '', newDBTNS: '', newDBUser: '', newDBPass: '', editDB: '', newSnapshotInterval : 1 });
+    this.setState({addDBDialog: true, addDBTitle: 'Add Database', newDBName: '', newDBTNS: '', newDBUser: '', newDBPass: '', editDB: '', newSnapshotInterval : 1, newSnapshotKeepTime: 30 });
   };
 
   handleLoad = (db) =>  {
-    this.setState({addDBDialog: true, addDBTitle: 'Database Settings', newDBName: db.name, newDBTNS: db.tns, newDBUser: db.user, newDBPass: '', editDB: db.name, newSnapshotInterval : db.snapshot});
+    this.setState({addDBDialog: true, addDBTitle: 'Database Settings', newDBName: db.name, newDBTNS: db.tns, newDBUser: db.user, newDBPass: '', editDB: db.name, newSnapshotInterval : db.snapshot, newSnapshotKeepTime: db.keeptime});
   };
 
   handleClose = () =>  {
@@ -59,7 +59,8 @@ class App extends Component {
       user: this.state.newDBUser,
       pass: this.state.newDBPass,
       oldName: this.state.editDB,
-      snapshot: this.state.newSnapshotInterval
+      snapshot: this.state.newSnapshotInterval,
+      keeptime: this.state.newSnapshotKeepTime
     };
     api.callPostApi('/api/adddb', data)
       .then((res) => { 
@@ -188,8 +189,12 @@ class App extends Component {
         <TextField onChange={(e, value) => { this.setState({ newDBTNS: value } ); }} hintText="Enter Oracle TNS" floatingLabelText="Oracle TNS" fullWidth={true} value={this.state.newDBTNS} />
         <TextField onChange={(e, value) => { this.setState({ newDBUser: value } ); }} hintText="Enter username for connection" floatingLabelText="Username" value={this.state.newDBUser} />
         <TextField onChange={(e, value) => { this.setState({ newDBPass: value } ); }} hintText="Enter password" type="password" floatingLabelText="Password" value={this.state.newDBPass} />
-        {this.state.editDB != '' && 
+        {this.state.editDB != '' && (
+           <div>
            <TextField onChange={(e, value) => { this.setState({ newSnapshotInterval: value } ); }} hintText="Enter interval" floatingLabelText="Snapshot Interval (hours)"  value={this.state.newSnapshotInterval} />
+           <TextField onChange={(e, value) => { this.setState({ newSnapshotKeepTime: value } ); }} hintText="Enter snapshot keep time" floatingLabelText="Snapshot Keep Time (days)"  value={this.state.newSnapshotKeepTime} />
+           </div>
+          )
         }
         </Dialog>
       </div>

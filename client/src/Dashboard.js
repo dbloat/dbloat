@@ -255,7 +255,7 @@ class App extends Component {
 
 
        return      (
-            <Card key={el.name} style={{ width : "90%", margin: "20px" }}  >
+            <Card key={el.name} style={{ width : "100%", margin: "20px" }}  >
            <CardHeader title={el.name} style={{ backgroundColor: "#80CBC4"}}  >        
 		<TimeAgo style={{ fontSize: "9pt", float: "right", position: "relative", bottom: "15px" }}date={el.lastrefresh} formatter={this.agoFormatter} /> 
 	  </CardHeader>
@@ -387,7 +387,7 @@ class App extends Component {
 
   const style = {
     textAlign: 'left',
-    width : '90%',
+    width : '95%',
     display: 'inline-block',
     padding: '10px'
   };

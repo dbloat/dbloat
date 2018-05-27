@@ -29,3 +29,28 @@ COMMIT;
 END;
 /
 
+create or replace procedure clean_snapshot ( interval IN INT)
+is
+begin
+delete from spacemon where time < SYSDATE - interval;
+commit;
+end;
+/
+
+declare
+        l_job number;
+BEGIN
+DBMS_JOB.SUBMIT(l_job, 'clean_snapshot(60);', sysdate, 'sysdate+1');
+COMMIT;
+END;
+/
+
+create or replace procedure set_keeptime ( interval IN INT )
+is
+  jobnum INT;
+begin
+  select job into jobnum from user_jobs where what like 'clean_snapshot%';
+  dbms_job.change(jobnum,'clean_snapshot('||interval||');',sysdate,'sysdate+1');
+commit;
+end;
+/

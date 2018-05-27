@@ -53,7 +53,7 @@ module.exports = {
         }
 
   if(configdb) pass = configdb.pass; else pass = req.body.pass;
-
+  console.log("Try to connect to new db "+req.body.tns);
   oracledb.getConnection(
   {
     user          : req.body.user,
@@ -62,22 +62,31 @@ module.exports = {
   },
   function(err, connection)
   {
+    console.log("Connected.");
     if (err) { console.error(err); res.status(500).send('{ "error": "Cannot connect DB:'+String(err).replace(/["]/g, '')+'" }'); return; }
     connection.execute(
       "select distinct(time) from spacemon",
       function(err, result)
       {
+        console.log("Check query");
         if (err) { console.error(err); res.status(500).send('{ "error": "Cannot connect DB:'+String(err).replace(/["]/g, '')+'" }'); return; }
         let newdb = { 
           name: req.body.name,
           tns: req.body.tns,
           user: req.body.user,
           pass: req.body.pass,
-          snapshot: req.body.snapshot          
+          snapshot: req.body.snapshot,
+          keeptime: req.body.keeptime
         };
-        let oldSnapshot = config.db[configdbInd].snapshot;
-        if(req.body.oldName == '' && configdbInd != -1) res.status(500).send('{ "error": "DB already exists with the same name" }');
-        
+
+        if(req.body.oldName  == '' && configdbInd != -1) res.status(500).send('{ "error": "DB already exists with the same name" }');
+        let oldSnapshot = -1;
+        let oldKeeptime = -1;
+        if(configdb) {
+            oldSnapshot = config.db[configdbInd].snapshot;
+            oldKeeptime = config.db[configdbInd].keeptime;
+        }
+        if(!oldKeeptime) oldKeeptime = -1;
         if(req.body.oldName == '')
           config.db.push(newdb); else
 	{
@@ -89,40 +98,83 @@ module.exports = {
                 config.query[qind].dbname = req.body.name;
               }
             }
-
-          
-          if(req.body.snapshot != oldSnapshot)
+        }
+          console.log("New Snapshot:"+req.body.snapshot+", "+"Old Snapshot:"+oldSnapshot);
+          console.log("New Keeptime:"+req.body.keeptime+", "+"Old Keeptime:"+oldKeeptime);
+          if((req.body.snapshot != oldSnapshot && oldSnapshot != -1) || (req.body.keeptime != oldKeeptime && oldKeeptime != -1))
           {
-             console.log("Change Interval from "+configdb.snapshot+" to "+req.body.snapshot);
-             connection.execute(
-                 "BEGIN set_interval(:i); END;",{i : parseInt(req.body.snapshot)},
-              function(err, result)
-              {
-                if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return; }
-                config.db[configdbInd].snapshot = req.body.snapshot;              
-                configman.save(config); 
-                connection.release(
-                function(err) {
-                if (err) {
-                  console.error(err.message);
-                }
+             if(req.body.snapshot != oldSnapshot && oldSnapshot != -1) {
+               console.log("Change Interval from "+configdb.snapshot+" to "+req.body.snapshot);
+               connection.execute(
+                   "BEGIN set_interval(:i); END;",{i : parseInt(req.body.snapshot)},
+                function(err, result)
+                {
+                  if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return; }
+
+                  config.db[configdbInd].snapshot = req.body.snapshot;
+                  configman.save(config); 
+
+                  if(req.body.keeptime != oldKeeptime && oldKeeptime != -1) {
+                     console.log("Change Keeptime from "+configdb.keeptime+" to "+req.body.keeptime);
+                     connection.execute(
+                        "BEGIN set_keeptime(:i); END;",{i : parseInt(req.body.keeptime)},
+                     function(err, result)
+                     {
+                         if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return; }
+                         config.db[configdbInd].keeptime = req.body.keeptime;
+                         configman.save(config); 
+                            connection.release(
+                              function(err) {
+                              if (err) {
+                                console.error(err.message);
+                              }
+                            });
+                            res.status(200).send('{ "error": false }');
+                    });
+                  } else {
+
+                      connection.release(
+                      function(err) {
+                        if (err) {
+                           console.error(err.message);
+                        }
+                      });
+                      res.status(200).send('{ "error": false }');
+                  }
                 });
-                 res.status(200).send('{ "error": false }');
-              });           
+             } else
+             {
+               if(req.body.keeptime != oldKeeptime && oldKeeptime != -1) {
+                     console.log("Change Keeptime from "+configdb.keeptime+" to "+req.body.keeptime);
+                     connection.execute(
+                        "BEGIN set_keeptime(:i); END;",{i : parseInt(req.body.keeptime)},
+                     function(err, result)
+                     {
+                         if (err) { console.error(err); res.status(500).send('{ "error": "Error:'+String(err).replace(/["]/g, '')+'" }'); return; }
+                         config.db[configdbInd].keeptime = req.body.keeptime;
+                         configman.save(config); 
+                            connection.release(
+                              function(err) {
+                              if (err) {
+                                console.error(err.message);
+                              }
+                            });
+                            res.status(200).send('{ "error": false }');
+                    });
+               }
+             }
           } else
           {
-             
-             configman.save(config); 
-             connection.release(
-             function(err) {
-             if (err) {
-               console.error(err.message);
-             }
-             });
-            res.status(200).send('{ "error": false }');
+
+               configman.save(config); 
+               connection.release(
+               function(err) {
+               if (err) {
+                 console.error(err.message);
+               }
+               });
+               res.status(200).send('{ "error": false }');
           }
-       }
-      
 
 
       });
@@ -143,6 +195,7 @@ addquery(req, res) {
           config.query[qind].name = req.body.qnewname;
           config.query[qind].priority = req.body.priority;
           config.query[qind].update = req.body.update;
+          config.query[qind].hour = req.body.hour;
           for(dind in config.dashboards) {
            for(qdind in config.dashboards[dind].queries) {
              if(config.dashboards[dind].queries[qdind].name == req.body.qname) 
@@ -164,7 +217,8 @@ addquery(req, res) {
       name : req.body.qname,
       sql : req.body.sql,
       priority: req.body.priority,
-      update: req.body.update
+      update: req.body.update,
+      hour: req.body.hour
     };
     config.query.push(nquery);
     configman.save(config);
